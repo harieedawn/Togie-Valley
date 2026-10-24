@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d2750">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Togie Valley">
+<meta name="description" content="Togie Valley: cozy 3D mobile farming game.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<title>Togie Valley</title>
+<style>
+html, body { background: #f3e3bf; }
+body:not(.tv-playing) #tv-hud { display: none !important; }
+#tv-splash { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: linear-gradient(#fbeecb, #f1d9a0); color: #7a4b22; font-family: 'Baloo 2', system-ui, sans-serif; transition: opacity .35s; }
+#tv-splash.out { opacity: 0; pointer-events: none; }
+#tv-splash .sp-logo { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: .5px; text-align: center; }
+#tv-splash .sp-logo span { display: block; color: #5c9a3c; }
+#tv-splash svg { width: 64px; height: 64px; overflow: visible; }
+#tv-splash .sp-sprout { transform-origin: 32px 56px; animation: spGrow 1.6s ease-in-out infinite; }
+#tv-splash .sp-l1 { transform-origin: 32px 34px; animation: spSway 1.6s ease-in-out infinite; }
+#tv-splash .sp-txt { font-size: 18px; font-weight: 700; opacity: .85; }
+@keyframes spGrow { 0%, 100% { transform: scale(.9); } 50% { transform: scale(1.06); } }
+@keyframes spSway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap">
+<link rel="preload" href="fonts/gsans-vf.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/house.css">
+<link rel="stylesheet" href="css/shop.css">
+<link rel="stylesheet" href="css/land.css">
+<link rel="stylesheet" href="css/furniture.css">
+<link rel="stylesheet" href="css/placement.css">
+<link rel="stylesheet" href="css/fishing.css">
+<link rel="stylesheet" href="css/notebook.css">
+<link rel="stylesheet" href="css/saveslots.css">
+<link rel="stylesheet" href="css/perf.css">
+<link rel="stylesheet" href="css/uiscale.css">
+<link rel="stylesheet" href="css/joystick.css">
+<link rel="stylesheet" href="css/tutorial.css">
+<link rel="stylesheet" href="css/menus.css">
+</head>
+<body>
+<div id="tv-splash" role="status"><div class="sp-logo">Togie<span>Valley</span></div>
+<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="58" rx="20" ry="5" fill="#8a5a2b"/><g class="sp-sprout"><path d="M32 56 V32" stroke="#4f8a34" stroke-width="4" stroke-linecap="round" fill="none"/><g class="sp-l1"><path d="M32 34 C18 34 12 22 14 14 C26 14 34 22 32 34Z" fill="#7cc24f"/><path d="M32 34 C46 34 52 22 50 14 C38 14 30 22 32 34Z" fill="#5fae3c"/></g></g></svg>
+<div class="sp-txt">Đang tải...</div></div>
+<script>window.tvSplashHide = function () { var s = document.getElementById('tv-splash'); if (!s) return; s.classList.add('out'); setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 420); }; setTimeout(function () { if (window.tvSplashHide) window.tvSplashHide(); }, 25000);</script>
+<canvas id="game"></canvas>
+<div id="ui"></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/errors.js"></script>
+<script src="js/core.js"></script>
+<script src="js/render.js"></script>
+<script src="js/chunks.js"></script>
+<script src="js/models.js"></script>
+<script src="js/models_props.js"></script>
+<script src="js/world_map.js"></script>
+<script src="js/world.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/scenery_layout.js"></script>
+<script src="js/decor.js"></script>
+<script src="js/town.js"></script>
+<script src="js/scenery.js"></script>
+<script src="js/scenery_far.js"></script>
+<script src="js/input.js"></script>
+<script src="js/scenes.js"></script>
+<script src="js/move_speed.js"></script>
+<script src="js/player.js"></script>
+<script src="js/interact.js"></script>
+<script src="js/items.js"></script>
+<script src="js/state.js"></script>
+<script src="js/time.js"></script>
+<script src="js/net.js"></script>
+<script src="js/save.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/house_map.js"></script>
+<script src="js/house.js"></script>
+<script src="js/data_crops.js"></script>
+<script src="js/farm.js"></script>
+<script src="js/farm_fx.js"></script>
+<script src="js/data_shop.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/data_fish.js"></script>
+<script src="js/reel_core.js"></script>
+<script src="js/fishing.js"></script>
+<script src="js/fish_models.js"></script>
+<script src="js/fish_stall.js"></script>
+<script src="js/town_life.js"></script>
+<script src="js/farm_look.js"></script>
+<script src="js/landmarks.js"></script>
+<script src="js/detail_extra.js"></script>
+<script src="js/grass.js"></script>
+<script src="js/critters.js"></script>
+<script src="js/chill_spots.js"></script>
+<script src="js/land_office.js"></script>
+<script src="js/land_farm.js"></script>
+<script src="js/land_house.js"></script>
+<script src="js/furniture.js"></script>
+<script src="js/furniture_shop.js"></script>
+<script src="js/placement_logic.js"></script>
+<script src="js/placement.js"></script>
+<script src="js/solids.js"></script>
+<script src="js/furn_live.js"></script>
+<script src="js/fishing_fx.js"></script>
+<script src="js/char_anim.js"></script>
+<script src="js/anim_data.js"></script>
+<script src="js/anim_tools.js"></script>
+<script src="js/anim_clips.js"></script>
+<script src="js/anim_actions.js"></script>
+<script src="js/seat.js"></script>
+<script src="js/npc_react.js"></script>
+<script src="js/world_react.js"></script>
+<script src="js/action_hint.js"></script>
+<script src="js/detail_kit.js"></script>
+<script src="js/detail_terrain.js"></script>
+<script src="js/detail_town.js"></script>
+<script src="js/ambient.js"></script>
+<script src="js/ambient_plus.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/dsp.js"></script>
+<script src="js/sfx_bank.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data_cook.js"></script>
+<script src="js/cooking.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/notebook.js"></script>
+<script src="js/saveslots.js"></script>
+<script src="js/bush_fx.js"></script>
+<script src="js/perf.js"></script>
+<script src="js/quality.js"></script>
+<script src="js/perf_ui.js"></script>
+<script src="js/ui_scale.js"></script>
+<script src="js/joystick.js"></script>
+<script src="js/camera_auto.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/dev_tools.js"></script>
+<script src="js/menus.js"></script>
+<script src="js/native.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
