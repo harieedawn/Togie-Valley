@@ -26,10 +26,12 @@
       warmupWindows: 2,
       minScale: 0.6,
       maxScale: 1.0,
-      stepDown: 0.1,
-      stepUp: 0.05,
-      upAfterWindows: 4,
-      holdAfterDownWindows: 6
+      stepDown: 0.15,   // discrete steps (1.0 -> 0.85 -> 0.7 -> 0.6)
+      stepUp: 0.15,
+      upAfterWindows: 15,   // 15 s of comfortable frame time before stepping up
+      holdAfterDownWindows: 6,
+      minGapMs: 10000,      // at least 10 s between scaler changes
+      maxChanges: 4         // per session (a resize can flash the canvas)
     },
 
     render: {
@@ -150,7 +152,7 @@
   /* ----------------------------------------------------------------- Display */
   var sc = Config.scaler;
   var scState = { acc: 0, frames: 0, warm: 0, low: 0, high: 0, hold: 0, settle: 0 };
-  var resizeTimer = 0;
+  var resizeTimer = 0, lastScaleAt = performance.now();
 
   var Display = Game.Display = {
     canvas: null,
@@ -161,6 +163,7 @@
     scale: 1,           // dynamic resolution scale (minScale..maxScale)
     pixelRatio: 1,      // effective renderer pixel ratio = clamp(min(dpr,maxDpr) * scale)
     scaler: { enabled: sc.enabled, targetFps: sc.targetFps, fps: 0 },
+    stats: { resChanges: 0, ctxLost: 0, scalerChanges: 0 },   // shown in the perf overlay
 
     // Measure the canvas; does NOT emit. Render.init reads the values afterwards.
     init: function (canvas) {
@@ -186,6 +189,11 @@
     setScale: function (s, reason) {
       s = util.clamp(Math.round(s * 20) / 20, sc.minScale, sc.maxScale);
       if (s === Display.scale) return;
+      if (reason === 'scaler-down' || reason === 'scaler-up') {   // rare + safe: rate limited, capped per session
+        var now = performance.now();
+        if (Display.stats.scalerChanges >= sc.maxChanges || now - lastScaleAt < sc.minGapMs) return;
+        lastScaleAt = now; Display.stats.scalerChanges++;
+      }
       Display.scale = s;
       scState.acc = 0; scState.frames = 0; scState.settle = 1;
       measure(true, reason || 'scale');
@@ -231,16 +239,19 @@
     var h = Math.max(1, (c && c.clientHeight) || window.innerHeight || 1);
     var dpr = window.devicePixelRatio || 1;
     var cfg = Config.display;
+    // Mobile address bar show/hide fires resize: ignore a height-only change < 25% (keeps the buffer intact).
+    if (reason === 'resize' && Display.width > 1 && w === Display.width && Math.abs(h - Display.height) / Display.height < 0.25) return;
     var pr = util.clamp(Math.min(dpr, cfg.maxDpr) * Display.scale, cfg.minPixelRatio, cfg.maxDpr);
     var changed = (w !== Display.width) || (h !== Display.height) || Math.abs(pr - Display.pixelRatio) > 1e-4;
     Display.width = w; Display.height = h; Display.aspect = w / h;
     Display.dpr = dpr; Display.pixelRatio = pr;
+    if (emit && changed) Display.stats.resChanges++;
     if (emit && changed) Events.emit('display:resize', Display.info(reason));
   }
 
   function schedule() {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () { measure(true, 'resize'); }, 60);
+    resizeTimer = setTimeout(function () { measure(true, 'resize'); }, 150);
   }
 
   /* -------------------------------------------------------------------- Loop */

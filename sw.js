@@ -1,7 +1,7 @@
 /* Togie Valley - service worker (Stage 13). Cache-first; runtime-caches CDN three.js + Google Fonts.
  * music/ is never precached; tracks are cached on first play (cap 40 MB, oldest evicted). */
 'use strict';
-var VERSION = 'tv-v16';
+var VERSION = 'tv-v17';
 var CORE = VERSION + '-core', RUNTIME = VERSION + '-rt', MUSIC = VERSION + '-music';
 var MUSIC_CAP = 40 * 1024 * 1024;
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'fonts/gsans-vf.woff', 'vendor/three.min.js',

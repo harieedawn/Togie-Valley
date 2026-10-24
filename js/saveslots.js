@@ -94,20 +94,24 @@
   function tap(b, fn, cls) { if (cls) b.className += ' ' + cls; b.addEventListener('click', function () { if (G.UI && G.UI.sfx) G.UI.sfx('tap'); fn(); }); return b; }
   function toast(m, ic) { if (G.UI && G.UI.toast) G.UI.toast(m, ic); }
 
+  function firstFree() { for (var k = 1; k <= N; k++) if (!SS.meta(k)) return k; return 1; }
   function modal(root, title, build) {   // small paper card over the title screen
     var wrap = el('div', 'sv-modal', root), card = el('div', 'tv-card sv-card', wrap);
     el('h2', null, card, esc(title));
     function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
     build(card, close); return close;
   }
-  function askName(root, title, init, cb) {
+  function askName(root, title, init, cb, okLabel) {
     modal(root, title, function (card, close) {
       var inp = el('input', 'sv-input', card); inp.type = 'text'; inp.maxLength = MAXLEN; inp.value = init; inp.setAttribute('aria-label', 'Tên nông trại');
-      el('div', 'sv-hint', card, 'Tối đa ' + MAXLEN + ' ký tự');
-      var row = el('div', 'tv-row', card);
+      inp.setAttribute('enterkeyhint', 'done'); inp.setAttribute('autocomplete', 'off'); inp.setAttribute('autocapitalize', 'sentences');
+      var row = el('div', 'tv-row sv-namerow', card);
       tap(el('button', 'tv-btn alt', row, 'Hủy'), close);
-      tap(el('button', 'tv-btn', row, 'Lưu'), function () { var v = cleanName(inp.value, 1); close(); cb(inp.value.trim() ? v : null); });
-      setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) {} }, 30);
+      function submit() { var v = cleanName(inp.value, 1); close(); cb(inp.value.trim() ? v : null); }
+      tap(el('button', 'tv-btn', row, okLabel || 'Lưu'), submit);
+      inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
+      el('div', 'sv-hint', card, 'Tối đa ' + MAXLEN + ' ký tự');
+      setTimeout(function () { try { inp.focus({ preventScroll: true }); inp.select(); } catch (e) {} }, 30);
     });
   }
   function codeBox(root, title, text, importing, cb) {
@@ -136,7 +140,8 @@
         } else el('div', 'sv-meta', card, 'Ô trống');
         var main = el('div', 'sv-main', card);
         if (m) tap(el('button', 'tv-btn', main, s.active ? 'Tiếp tục' : 'Chơi'), function () { SS.select(i); close(); });
-        else tap(el('button', 'tv-btn', main, 'Game mới'), function () { askName(root, 'Đặt tên nông trại', defName(i), function (v) { if (v) { SS.create(i, v); close(); } }); });
+        else tap(el('button', 'tv-btn', main, 'Game mới'), function () { askName(root, 'Đặt tên nông trại', defName(i), function (v) { if (v) { SS.create(i, v); close(); } }, 'Bắt đầu'); });
+          tap(el('button', 'tv-btn alt', main, 'Chơi ngay'), function () { var f = firstFree(); SS.create(f, defName(f)); close(); });
         var row = el('div', 'sv-row', card);
         tap(el('button', 'tv-btn alt', row, 'Đổi tên'), function () { askName(root, 'Đổi tên nông trại', s.name, function (v) { if (v) { SS.rename(i, v); render(); } }); });
         if (m) {

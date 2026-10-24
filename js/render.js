@@ -709,6 +709,8 @@
     camera.aspect = info.width / info.height;
     camera.updateProjectionMatrix();
     applyResolution();
+    // setSize clears the drawing buffer: redraw synchronously so the cleared frame is never presented.
+    if (info.reason !== 'init') drawNow();
   }
 
   Render.init = function (cv) {
@@ -746,16 +748,18 @@
 
     canvas.addEventListener('webglcontextlost', function (e) {
       e.preventDefault();
+      Display.stats.ctxLost++;
       Loop.pause('contextlost');
       Events.emit('render:contextlost', {});
     }, false);
     canvas.addEventListener('webglcontextrestored', function () {
       Loop.resume('contextlost');
       Events.emit('render:contextrestored', {});
+      try { drawNow(); } catch (err) {}   // redraw at once so the restored buffer is not blank
     }, false);
 
     Loop.onFrame(function (dt) { Render.update(dt); }, 900);
-    Loop.onFrame(function () { Render.draw(); }, 1000);
+    Loop.onFrame(function () { Render.draw(); }, 1000);   // (no arg: gate applies)
     return Render;
   };
 
@@ -782,10 +786,12 @@
   // sky -> world -> grain/vignette overlay
   // Stage 14B: Render.pass = {sky, overlay, gate(), after(now)}: perf.js drops the full-screen passes on low tiers, caps the frame rate and times drawn frames.
   Render.pass = { sky: true, overlay: true, gate: null, after: null };
-  Render.draw = function () {
+  function drawNow() { Render.draw(true); }
+
+  Render.draw = function (force) {
     if (!renderer) return;
     var ps = Render.pass;
-    if (ps.gate && !ps.gate()) return;
+    if (!force && ps.gate && !ps.gate()) return;
     renderer.info.reset();
     if (!ps.sky) renderer.setClearColor(U.uSkyHorizon.value, 1);
     renderer.clear();

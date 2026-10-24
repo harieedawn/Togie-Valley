@@ -54,6 +54,8 @@
     n.push('Lệnh vẽ: ' + s.calls + '  Tam giác: ' + s.triangles);
     n.push('Sinh vật hoạt động: ' + creatures + '  Hạt: ' + particles);
     n.push('Mức đồ họa: ' + s.tierName + ' (' + s.mode + ')  Tỉ lệ điểm ảnh: ' + s.pixelRatio);
+    var ds = G.Display && G.Display.stats ? G.Display.stats : { resChanges: 0, ctxLost: 0 };
+    n.push('đổi độ phân giải: ' + ds.resChanges + '  mất ngữ cảnh: ' + ds.ctxLost);
     n.push('Khối bản đồ: ' + c.visible + '/' + c.chunks);
     n.push('Thiết bị: ' + d.screen + ', ' + d.cores + ' lõi, ' + d.mem + 'GB');
     return n.join('\n');
